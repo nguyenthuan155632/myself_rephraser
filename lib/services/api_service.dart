@@ -146,7 +146,15 @@ class OpenRouterService {
   String _buildPrompt(String text, ParaphraseMode mode) {
     switch (mode) {
       case ParaphraseMode.formal:
-        return '''Please provide exactly 3 different formal, professional rephrases of the following text. Make them suitable for business communication, academic writing, or formal documents. Maintain the original meaning but use sophisticated language and structure.
+        return '''Rephrase the following text in a formal, professional tone suitable for business communication, academic writing, or official documents.
+
+REQUIREMENTS:
+- Provide exactly 3 different versions
+- Use sophisticated vocabulary and professional language
+- Maintain the original meaning precisely
+- Each version should be 100-120% of the original length
+- Use proper grammar and formal sentence structure
+- Avoid contractions and casual expressions
 
 Format your response as:
 1. [First formal version]
@@ -158,7 +166,15 @@ Format your response as:
 Original text: "$text"''';
 
       case ParaphraseMode.simple:
-        return '''Please provide exactly 3 different simplified versions of the following text. Use simpler words and shorter sentences. Break down complex ideas into straightforward concepts while maintaining the original meaning.
+        return '''Simplify the following text to make it easier to understand while keeping the same meaning.
+
+REQUIREMENTS:
+- Provide exactly 3 different simplified versions
+- Use common, everyday words
+- Break complex sentences into shorter ones
+- Maintain clarity and readability
+- Each version should be 90-110% of the original length
+- Keep the core message intact
 
 Format your response as:
 1. [First simplified version]
@@ -170,7 +186,15 @@ Format your response as:
 Original text: "$text"''';
 
       case ParaphraseMode.shorten:
-        return '''Please provide exactly 3 different shortened versions of the following text while preserving its core meaning. Remove unnecessary words, combine ideas, and make it concise. Keep the essential information intact.
+        return '''Create concise versions of the following text by removing unnecessary words while preserving the essential meaning.
+
+REQUIREMENTS:
+- Provide exactly 3 different shortened versions
+- Remove redundant words and filler phrases
+- Combine ideas efficiently
+- Keep all critical information
+- Each version should be 60-80% of the original length
+- Maintain clarity despite brevity
 
 Format your response as:
 1. [First shortened version]
@@ -182,7 +206,15 @@ Format your response as:
 Original text: "$text"''';
 
       case ParaphraseMode.creative:
-        return '''Please provide exactly 3 different creative rephrases of the following text. Use varied vocabulary, different sentence structures, and engaging language. Make it interesting to read while maintaining the original meaning.
+        return '''Rephrase the following text in creative and engaging ways while maintaining its meaning.
+
+REQUIREMENTS:
+- Provide exactly 3 different creative versions
+- Use vivid vocabulary and varied expressions
+- Employ different sentence structures and styles
+- Make it engaging and interesting to read
+- Each version should be 90-120% of the original length
+- Preserve the original message and tone
 
 Format your response as:
 1. [First creative version]

@@ -73,6 +73,6 @@ flutter test
 ## Notes
 
 - System tray integration needs icon assets in `assets/` folder
-- Global hotkey default: `Cmd+Shift+P` (macOS) / `Ctrl+Shift+P` (Windows)
+- Global hotkey default: `Cmd+Shift+K` (macOS) / `Ctrl+Shift+L` (Windows)
 - App minimizes to system tray instead of closing
 - All text processing happens via OpenRouter API (no local AI models)

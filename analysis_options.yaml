@@ -25,9 +25,8 @@ linter:
     prefer_const_literals_to_create_immutables: true
     prefer_final_fields: true
     use_key_in_widget_constructors: true
-    avoid_print: true
+    avoid_print: false # Disabled for desktop app debugging
     prefer_single_quotes: true
     sort_child_properties_last: true
-
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

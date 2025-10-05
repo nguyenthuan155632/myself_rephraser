@@ -48,7 +48,7 @@ flutter build windows --release
 ## Usage
 
 1. **Set up API Key**: Open the app and configure your OpenRouter API key in settings
-2. **Use Global Hotkey**: Press `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows) to open the paraphraser overlay
+2. **Use Global Hotkey**: Press `Cmd+Shift+K` (macOS) or `Ctrl+Shift+K` (Windows) to open the paraphraser overlay
 3. **Select Mode**: Choose from Formal, Simple, Shorten, or Creative modes
 4. **Paraphrase**: Enter your text and click "Paraphrase"
 5. **Copy Result**: Copy the paraphrased text to clipboard

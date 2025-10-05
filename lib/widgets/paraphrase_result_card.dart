@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../core/paraphrase_provider.dart';
 import '../models/paraphrase.dart';
 import '../services/clipboard_service.dart';
 
@@ -17,74 +15,151 @@ class ParaphraseResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(context),
-          if (showOriginal) ...[
-            _buildSection(
-              context,
-              title: 'Original',
-              text: response.originalText,
-              backgroundColor: Theme.of(context).colorScheme.surface,
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showOriginal) ...[
+                    _buildSection(
+                      context,
+                      title: 'Original',
+                      text: response.originalText,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  ...response.paraphrasedOptions.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final option = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildSection(
+                        context,
+                        title: 'Option ${index + 1}',
+                        text: option,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-          ],
-          _buildSection(
-            context,
-            title: 'Paraphrased',
-            text: response.paraphrasedText,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           ),
-          const SizedBox(height: 8),
-          _buildActions(context),
         ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+            Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          Icon(
-            Icons.auto_awesome,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-            size: 20,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.auto_awesome,
+              color: Theme.of(context).colorScheme.primary,
+              size: 22,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              '${response.mode.displayName} Mode',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${response.mode.displayName} Mode',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${response.paraphrasedOptions.length} variations generated',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.onPrimaryContainer.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              response.model,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
               ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.smart_toy,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  response.model.split('/').last.split('-').first.toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -99,75 +174,116 @@ class ParaphraseResultCard extends StatelessWidget {
     required Color backgroundColor,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
               const Spacer(),
-              IconButton(
-                onPressed: () => _copyText(context, text),
-                icon: const Icon(Icons.copy, size: 16),
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                tooltip: 'Copy $title',
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: IconButton(
+                  onPressed: () => _copyText(context, text),
+                  icon: const Icon(Icons.content_copy, size: 18),
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                  tooltip: 'Copy $title',
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
             text,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurface,
-              height: 1.4,
+              height: 1.6,
+              letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${text.length} characters • ${text.split(' ').length} words',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActions(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {
-                _copyText(context, response.originalText);
-              },
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Copy Original'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _copyText(context, response.paraphrasedText);
-              },
-              icon: const Icon(Icons.content_copy, size: 16),
-              label: const Text('Copy Result'),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.text_fields,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${text.length} chars',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Icon(
+                  Icons.format_align_left,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${text.split(' ').length} words',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -3,16 +3,14 @@ class AppSettings {
   final String selectedModel;
   final String globalHotkey;
   final bool isDarkMode;
-  final double fontSize;
-  final bool startAtLogin;
+  final String defaultParaphraseMode;
 
   const AppSettings({
     this.apiKey,
     this.selectedModel = 'google/gemini-2.5-flash-lite-preview-09-2025',
     this.globalHotkey = 'Cmd+Shift+K',
     this.isDarkMode = false,
-    this.fontSize = 14.0,
-    this.startAtLogin = false,
+    this.defaultParaphraseMode = 'formal',
   });
 
   AppSettings copyWith({
@@ -20,16 +18,15 @@ class AppSettings {
     String? selectedModel,
     String? globalHotkey,
     bool? isDarkMode,
-    double? fontSize,
-    bool? startAtLogin,
+    String? defaultParaphraseMode,
   }) {
     return AppSettings(
       apiKey: apiKey ?? this.apiKey,
       selectedModel: selectedModel ?? this.selectedModel,
       globalHotkey: globalHotkey ?? this.globalHotkey,
       isDarkMode: isDarkMode ?? this.isDarkMode,
-      fontSize: fontSize ?? this.fontSize,
-      startAtLogin: startAtLogin ?? this.startAtLogin,
+      defaultParaphraseMode:
+          defaultParaphraseMode ?? this.defaultParaphraseMode,
     );
   }
 
@@ -38,17 +35,16 @@ class AppSettings {
     'selectedModel': selectedModel,
     'globalHotkey': globalHotkey,
     'isDarkMode': isDarkMode,
-    'fontSize': fontSize,
-    'startAtLogin': startAtLogin,
+    'defaultParaphraseMode': defaultParaphraseMode,
   };
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
     apiKey: json['apiKey'],
-    selectedModel: json['selectedModel'] ?? 'google/gemini-2.5-flash-lite-preview-09-2025',
+    selectedModel:
+        json['selectedModel'] ?? 'google/gemini-2.5-flash-lite-preview-09-2025',
     globalHotkey: json['globalHotkey'] ?? 'Cmd+Shift+K',
     isDarkMode: json['isDarkMode'] ?? false,
-    fontSize: (json['fontSize'] as num?)?.toDouble() ?? 14.0,
-    startAtLogin: json['startAtLogin'] ?? false,
+    defaultParaphraseMode: json['defaultParaphraseMode'] ?? 'formal',
   );
 }
 

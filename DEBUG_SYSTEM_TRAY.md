@@ -55,6 +55,6 @@ ps aux | grep myself_rephraser
 If system tray doesn't work, you can:
 1. Use the regular minimize (Cmd+M) instead of hide
 2. Keep the app in the dock
-3. Use the global hotkey `Cmd+Shift+V` to access the paraphraser
+3. Use the global hotkey `Cmd+Shift+K` to access the paraphraser
 
 The paraphraser overlay should still work with the global hotkey even if the main window is minimized!

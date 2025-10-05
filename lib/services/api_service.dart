@@ -46,9 +46,12 @@ class OpenRouterService {
         final data = jsonDecode(response.body);
         final content = data['choices'][0]['message']['content'] as String;
 
+        // Parse the response to extract individual options
+        final paraphrasedOptions = _parseOptions(content.trim());
+
         return ParaphraseResponse(
           originalText: text,
-          paraphrasedText: content.trim(),
+          paraphrasedOptions: paraphrasedOptions,
           mode: mode,
           model: _model,
           timestamp: DateTime.now(),
@@ -65,35 +68,130 @@ class OpenRouterService {
     }
   }
 
+  List<String> _parseOptions(String content) {
+    // Try to split by numbered options (1., 2., 3. or 1), 2), 3))
+    final numberedPattern = RegExp(
+      r'(?:^|\n)(?:\d+[\.\)])\s*(.+?)(?=\n\d+[\.\)]|\$)',
+      multiLine: true,
+      dotAll: true,
+    );
+    final numberedMatches = numberedPattern.allMatches(content);
+
+    if (numberedMatches.length >= 3) {
+      return numberedMatches
+          .take(3)
+          .map((m) => _cleanOption(m.group(1)!))
+          .toList();
+    }
+
+    // Try to split by bullet points or asterisks
+    final bulletPattern = RegExp(
+      r'(?:^|\n)[\*\-•]\s*(.+?)(?=\n[\*\-•]|\$)',
+      multiLine: true,
+      dotAll: true,
+    );
+    final bulletMatches = bulletPattern.allMatches(content);
+
+    if (bulletMatches.length >= 3) {
+      return bulletMatches
+          .take(3)
+          .map((m) => _cleanOption(m.group(1)!))
+          .toList();
+    }
+
+    // Try splitting by "Option N:" pattern
+    final optionPattern = RegExp(
+      r'(?:Option|Alternative)\s*\d+:?\s*(.+?)(?=(?:Option|Alternative)\s*\d+:?|\$)',
+      multiLine: true,
+      dotAll: true,
+      caseSensitive: false,
+    );
+    final optionMatches = optionPattern.allMatches(content);
+
+    if (optionMatches.length >= 3) {
+      return optionMatches
+          .take(3)
+          .map((m) => _cleanOption(m.group(1)!))
+          .toList();
+    }
+
+    // Fallback: split by double newlines
+    final parts = content
+        .split(RegExp(r'\n\s*\n+'))
+        .where((p) => p.trim().isNotEmpty)
+        .map((p) => _cleanOption(p))
+        .toList();
+
+    if (parts.length >= 3) {
+      return parts.take(3).toList();
+    }
+
+    // Last resort: return the whole content as single option
+    return [_cleanOption(content)];
+  }
+
+  String _cleanOption(String text) {
+    // Remove leading numbers (1., 2., 1), 2), etc)
+    text = text.replaceFirst(RegExp(r'^\s*\d+[\.\)]\s*'), '');
+    // Remove leading bullets
+    text = text.replaceFirst(RegExp(r'^\s*[\*\-•]\s*'), '');
+    // Remove leading "Option N:" or "Alternative N:"
+    text = text.replaceFirst(
+      RegExp(r'^\s*(?:Option|Alternative)\s*\d+:?\s*', caseSensitive: false),
+      '',
+    );
+    return text.trim();
+  }
+
   String _buildPrompt(String text, ParaphraseMode mode) {
     switch (mode) {
       case ParaphraseMode.formal:
-        return '''Please rephrase the following text in a formal, professional tone. Make it suitable for business communication, academic writing, or formal documents. Maintain the original meaning but use more sophisticated language and structure.
+        return '''Please provide exactly 3 different formal, professional rephrases of the following text. Make them suitable for business communication, academic writing, or formal documents. Maintain the original meaning but use sophisticated language and structure.
 
-Original text: "$text"
+Format your response as:
+1. [First formal version]
 
-Rephrased text:''';
+2. [Second formal version]
+
+3. [Third formal version]
+
+Original text: "$text"''';
 
       case ParaphraseMode.simple:
-        return '''Please simplify the following text to make it easier to understand. Use simpler words and shorter sentences. Break down complex ideas into more straightforward concepts while maintaining the original meaning.
+        return '''Please provide exactly 3 different simplified versions of the following text. Use simpler words and shorter sentences. Break down complex ideas into straightforward concepts while maintaining the original meaning.
 
-Original text: "$text"
+Format your response as:
+1. [First simplified version]
 
-Simplified text:''';
+2. [Second simplified version]
+
+3. [Third simplified version]
+
+Original text: "$text"''';
 
       case ParaphraseMode.shorten:
-        return '''Please shorten the following text while preserving its core meaning. Remove unnecessary words, combine ideas, and make it more concise. Keep the essential information intact.
+        return '''Please provide exactly 3 different shortened versions of the following text while preserving its core meaning. Remove unnecessary words, combine ideas, and make it concise. Keep the essential information intact.
 
-Original text: "$text"
+Format your response as:
+1. [First shortened version]
 
-Shortened text:''';
+2. [Second shortened version]
+
+3. [Third shortened version]
+
+Original text: "$text"''';
 
       case ParaphraseMode.creative:
-        return '''Please rephrase the following text in a more creative and expressive way. Use varied vocabulary, different sentence structures, and engaging language. Make it more interesting to read while maintaining the original meaning.
+        return '''Please provide exactly 3 different creative rephrases of the following text. Use varied vocabulary, different sentence structures, and engaging language. Make it interesting to read while maintaining the original meaning.
 
-Original text: "$text"
+Format your response as:
+1. [First creative version]
 
-Creative rephrasing:''';
+2. [Second creative version]
+
+3. [Third creative version]
+
+Original text: "$text"''';
     }
   }
 

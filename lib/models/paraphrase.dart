@@ -9,12 +9,7 @@ enum ParaphraseMode {
   final String description;
 }
 
-enum ParaphraseStatus {
-  idle,
-  processing,
-  success,
-  error,
-}
+enum ParaphraseStatus { idle, processing, success, error }
 
 class ParaphraseRequest {
   final String text;
@@ -36,16 +31,20 @@ class ParaphraseRequest {
 
 class ParaphraseResponse {
   final String originalText;
-  final String paraphrasedText;
+  final List<String> paraphrasedOptions;
   final ParaphraseMode mode;
   final String model;
   final DateTime timestamp;
 
   const ParaphraseResponse({
     required this.originalText,
-    required this.paraphrasedText,
+    required this.paraphrasedOptions,
     required this.mode,
     required this.model,
     required this.timestamp,
   });
+
+  // Backward compatibility
+  String get paraphrasedText =>
+      paraphrasedOptions.isNotEmpty ? paraphrasedOptions.first : '';
 }

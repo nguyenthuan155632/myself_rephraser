@@ -14,7 +14,7 @@ class SettingsService {
       // Check fallback storage first (more reliable)
       String? apiKey = prefs.getString(_apiKeyPrefsKey);
       bool usedFallback = false;
-      
+
       // If fallback is empty, try secure storage
       if (apiKey == null || apiKey.isEmpty) {
         try {
@@ -32,13 +32,17 @@ class SettingsService {
         print('SettingsService: Loaded API key from fallback storage');
       }
 
-      final selectedModel = prefs.getString('selected_model') ?? 'google/gemini-2.5-flash-lite-preview-09-2025';
+      final selectedModel =
+          prefs.getString('selected_model') ??
+          'google/gemini-2.5-flash-lite-preview-09-2025';
       final globalHotkey = prefs.getString('global_hotkey') ?? 'Cmd+Shift+K';
       final isDarkMode = prefs.getBool('is_dark_mode') ?? false;
-      final fontSize = prefs.getDouble('font_size') ?? 14.0;
-      final startAtLogin = prefs.getBool('start_at_login') ?? false;
+      final defaultParaphraseMode =
+          prefs.getString('default_paraphrase_mode') ?? 'formal';
 
-      print('SettingsService: API Key is ${apiKey != null && apiKey.isNotEmpty ? "SET" : "NULL"}');
+      print(
+        'SettingsService: API Key is ${apiKey != null && apiKey.isNotEmpty ? "SET" : "NULL"}',
+      );
       if (usedFallback) {
         print('SettingsService: (Using fallback storage)');
       }
@@ -49,8 +53,7 @@ class SettingsService {
         selectedModel: selectedModel,
         globalHotkey: globalHotkey,
         isDarkMode: isDarkMode,
-        fontSize: fontSize,
-        startAtLogin: startAtLogin,
+        defaultParaphraseMode: defaultParaphraseMode,
       );
     } catch (e) {
       print('SettingsService: Error loading settings: $e');
@@ -65,7 +68,7 @@ class SettingsService {
 
       if (settings.apiKey != null) {
         print('SettingsService: Saving API key...');
-        
+
         // Always save to both secure storage and fallback
         bool secureStorageSuccess = false;
         try {
@@ -75,13 +78,15 @@ class SettingsService {
         } catch (e) {
           print('SettingsService: Secure storage failed: $e');
         }
-        
+
         // Always save to fallback as backup
         await prefs.setString(_apiKeyPrefsKey, settings.apiKey!);
         print('SettingsService: API key saved to fallback storage');
-        
+
         if (!secureStorageSuccess) {
-          print('SettingsService: Note: Using fallback storage due to secure storage issue');
+          print(
+            'SettingsService: Note: Using fallback storage due to secure storage issue',
+          );
         }
       } else {
         print('SettingsService: API key is null, removing from storage');
@@ -97,8 +102,10 @@ class SettingsService {
       await prefs.setString('selected_model', settings.selectedModel);
       await prefs.setString('global_hotkey', settings.globalHotkey);
       await prefs.setBool('is_dark_mode', settings.isDarkMode);
-      await prefs.setDouble('font_size', settings.fontSize);
-      await prefs.setBool('start_at_login', settings.startAtLogin);
+      await prefs.setString(
+        'default_paraphrase_mode',
+        settings.defaultParaphraseMode,
+      );
 
       print('SettingsService: All settings saved successfully');
     } catch (e) {

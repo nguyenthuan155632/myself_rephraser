@@ -178,7 +178,7 @@ class SystemIntegrationService {
       _hotKey!,
       keyDownHandler: (hotKey) {
         if (_appContext != null && _appContext!.mounted) {
-          _showParaphraseOverlay(_appContext!);
+          showParaphraseOverlay(_appContext!);
         }
       },
     );
@@ -203,11 +203,11 @@ class SystemIntegrationService {
       print('SystemIntegrationService: Opening overlay');
       // Bring window to foreground first
       await WindowManagerService.instance.showFromSystemTray();
-      _showParaphraseOverlay(context);
+      showParaphraseOverlay(context);
     }
   }
 
-  static void _showParaphraseOverlay(BuildContext context) async {
+  static void showParaphraseOverlay(BuildContext context) async {
     try {
       // Get clipboard text (user should copy first with Cmd+C)
       String? clipboardText;
@@ -298,11 +298,11 @@ class SystemIntegrationService {
     } catch (e) {
       print('SystemIntegrationService: Error showing overlay: $e');
       // Fallback to centered overlay
-      _showCenteredOverlay(context);
+      showCenteredOverlay(context);
     }
   }
 
-  static void _showCenteredOverlay(BuildContext context) async {
+  static void showCenteredOverlay(BuildContext context) async {
     _isOverlayVisible = true;
 
     // Get clipboard text
@@ -313,13 +313,34 @@ class SystemIntegrationService {
       print('SystemIntegrationService: Failed to get clipboard: $e');
     }
 
+    const overlayWidth = 1200.0;
+    const overlayHeight = 900.0;
+
     showDialog(
       context: context,
       barrierDismissible: true,
       barrierColor: Colors.transparent,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        child: ParaphraseOverlay(initialText: clipboardText),
+        insetPadding: EdgeInsets.zero,
+        child: Center(
+          child: Container(
+            width: overlayWidth,
+            height: overlayHeight,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ParaphraseOverlay(initialText: clipboardText),
+          ),
+        ),
       ),
     ).then((_) {
       _isOverlayVisible = false;

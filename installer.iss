@@ -1,7 +1,7 @@
 #define MyAppName "Myself Rephraser"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "Myself Rephraser"
-#define MyAppExeName "myself_rephraser.exe"
+#define MyAppExeName "MyselfRephraser.exe"
 
 [Setup]
 AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}

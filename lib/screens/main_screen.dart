@@ -99,11 +99,11 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                       const SizedBox(height: 32),
                       Text(
                         'Myself Rephraser',
-                        style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -1,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.displaySmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -1,
+                                ),
                       ),
                       const SizedBox(height: 12),
                       Container(
@@ -119,17 +119,16 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                         ),
                         child: Text(
                           'AI-powered text paraphrasing',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                         ),
                       ),
                       const SizedBox(height: 48),
-
                       if (provider.settings.apiKey == null ||
                           provider.settings.apiKey!.isEmpty) ...[
                         Container(
@@ -182,7 +181,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               const SizedBox(height: 16),
                               Text(
                                 'API Key Required',
-                                style: Theme.of(context).textTheme.titleLarge
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
                                     ?.copyWith(
                                       color: Theme.of(
                                         context,
@@ -194,7 +195,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               Text(
                                 'Please configure your OpenRouter API key to start using the app.',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
                                     ?.copyWith(
                                       color: Theme.of(
                                         context,
@@ -215,7 +218,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               end: Alignment.bottomRight,
                               colors: [
                                 Theme.of(context).colorScheme.primaryContainer,
-                                Theme.of(context).colorScheme.tertiaryContainer
+                                Theme.of(context)
+                                    .colorScheme
+                                    .tertiaryContainer
                                     .withOpacity(0.5),
                               ],
                             ),
@@ -265,7 +270,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               const SizedBox(height: 16),
                               Text(
                                 'Ready to Use!',
-                                style: Theme.of(context).textTheme.titleLarge
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
                                     ?.copyWith(
                                       color: Theme.of(
                                         context,
@@ -315,19 +322,64 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               Text(
                                 'to open the paraphraser overlay',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
                                     ?.copyWith(
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.onPrimaryContainer,
                                     ),
                               ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'or',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      )
+                                          .colorScheme
+                                          .onPrimaryContainer
+                                          .withOpacity(0.7),
+                                    ),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  SystemIntegrationService.showCenteredOverlay(
+                                      context);
+                                },
+                                icon: const Icon(Icons.edit_note, size: 20),
+                                label: const Text(
+                                  'Open Overlay Manually',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.secondaryContainer,
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onSecondaryContainer,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                  elevation: 0,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 32),
                       ],
-
                       Container(
                         constraints: const BoxConstraints(maxWidth: 400),
                         child: Column(
@@ -337,7 +389,9 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Theme.of(context).colorScheme.primary
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
                                         .withOpacity(0.2),
                                     blurRadius: 15,
                                     offset: const Offset(0, 6),

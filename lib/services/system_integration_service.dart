@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -133,12 +134,18 @@ class SystemIntegrationService {
         print('SystemIntegrationService: No existing hotkeys to clear: $e');
       }
 
-      // Default hotkey will be set from settings
+      // Default hotkey - use Control on Windows/Linux, Command on macOS
+      final primaryModifier =
+          Platform.isMacOS ? HotKeyModifier.meta : HotKeyModifier.control;
+
       _hotKey = HotKey(
         key: PhysicalKeyboardKey.keyK,
-        modifiers: [HotKeyModifier.meta, HotKeyModifier.shift],
+        modifiers: [primaryModifier, HotKeyModifier.shift],
         scope: HotKeyScope.system,
       );
+
+      print(
+          'SystemIntegrationService: Registering hotkey with modifiers: ${_hotKey!.modifiers}');
 
       await hotKeyManager.register(
         _hotKey!,
@@ -152,7 +159,8 @@ class SystemIntegrationService {
         },
       );
 
-      print('SystemIntegrationService: Global hotkey registered successfully');
+      print(
+          'SystemIntegrationService: Global hotkey registered successfully (${Platform.isMacOS ? "Cmd" : "Ctrl"}+Shift+K)');
     } catch (e) {
       print('SystemIntegrationService: Failed to register hotkey: $e');
     }
@@ -167,10 +175,13 @@ class SystemIntegrationService {
     }
 
     // Parse hotkey string and register new hotkey
-    // This is a simplified version - you'd want to parse the string properly
+    // Use platform-appropriate modifier
+    final primaryModifier =
+        Platform.isMacOS ? HotKeyModifier.meta : HotKeyModifier.control;
+
     _hotKey = HotKey(
       key: PhysicalKeyboardKey.keyK,
-      modifiers: [HotKeyModifier.meta, HotKeyModifier.shift],
+      modifiers: [primaryModifier, HotKeyModifier.shift],
       scope: HotKeyScope.system,
     );
 

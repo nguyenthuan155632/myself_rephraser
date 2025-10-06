@@ -40,7 +40,7 @@ dependencies:
   dio: ^5.7.0
 
   # System Integration
-  window_manager: ^0.5.1
+  window_manager: ^0.4.2
   system_tray: ^2.0.3
   hotkey_manager: ^0.2.3
 

@@ -84,7 +84,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                             BoxShadow(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.primary.withValues(alpha: 0.3),
+                              ).colorScheme.primary.withOpacity(0.3),
                               blurRadius: 30,
                               spreadRadius: 5,
                             ),
@@ -157,7 +157,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               BoxShadow(
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.error.withValues(alpha: 0.2),
+                                ).colorScheme.error.withOpacity(0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -230,7 +230,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                               BoxShadow(
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.primary.withValues(alpha: 0.2),
+                                ).colorScheme.primary.withOpacity(0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -248,7 +248,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .primary
-                                          .withValues(alpha: 0.4),
+                                          .withOpacity(0.4),
                                       blurRadius: 15,
                                       spreadRadius: 2,
                                     ),
@@ -338,7 +338,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                 boxShadow: [
                                   BoxShadow(
                                     color: Theme.of(context).colorScheme.primary
-                                        .withValues(alpha: 0.2),
+                                        .withOpacity(0.2),
                                     blurRadius: 15,
                                     offset: const Offset(0, 6),
                                   ),

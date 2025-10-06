@@ -127,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 BoxShadow(
                   color: Theme.of(
                     context,
-                  ).colorScheme.primary.withValues(alpha: 0.2),
+                  ).colorScheme.primary.withOpacity(0.2),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -196,7 +196,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -245,7 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(
               width: double.infinity,
               child: DropdownButtonFormField<String>(
-                initialValue: _selectedModel,
+                value: _selectedModel,
                 decoration: const InputDecoration(
                   labelText: 'AI Model',
                   border: OutlineInputBorder(),
@@ -291,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -351,7 +351,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -426,7 +426,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),

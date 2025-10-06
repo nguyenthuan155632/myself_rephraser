@@ -25,7 +25,7 @@ class ParaphraseResultCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
             spreadRadius: 2,
             offset: const Offset(0, 8),
@@ -186,7 +186,7 @@ class ParaphraseResultCard extends StatelessWidget {
           BoxShadow(
             color: Theme.of(
               context,
-            ).colorScheme.primary.withValues(alpha: 0.03),
+            ).colorScheme.primary.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

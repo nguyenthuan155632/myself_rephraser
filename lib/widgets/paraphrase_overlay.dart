@@ -68,7 +68,7 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Colors.black.withOpacity(0.15),
                     blurRadius: 40,
                     spreadRadius: 4,
                     offset: const Offset(0, 16),
@@ -76,7 +76,7 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                   BoxShadow(
                     color: Theme.of(
                       context,
-                    ).colorScheme.primary.withValues(alpha: 0.05),
+                    ).colorScheme.primary.withOpacity(0.05),
                     blurRadius: 60,
                     spreadRadius: 8,
                     offset: const Offset(0, 8),
@@ -369,7 +369,7 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                 BoxShadow(
                   color: Theme.of(
                     context,
-                  ).colorScheme.primary.withValues(alpha: 0.3),
+                  ).colorScheme.primary.withOpacity(0.3),
                   blurRadius: 20,
                   spreadRadius: 2,
                   offset: const Offset(0, 8),
@@ -444,7 +444,7 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                     BoxShadow(
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withValues(alpha: 0.3),
+                      ).colorScheme.primary.withOpacity(0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

@@ -10,8 +10,8 @@ class OpenRouterService {
   final String _model;
 
   OpenRouterService({required String apiKey, required String model})
-    : _apiKey = apiKey,
-      _model = model;
+      : _apiKey = apiKey,
+        _model = model;
 
   Future<ParaphraseResponse> paraphraseText(
     String text,
@@ -146,15 +146,15 @@ class OpenRouterService {
   String _buildPrompt(String text, ParaphraseMode mode) {
     switch (mode) {
       case ParaphraseMode.formal:
-        return '''Rephrase the following text in a formal, professional tone suitable for business communication, academic writing, or official documents.
+        return '''Rephrase the following text in a formal, professional tone. Keep it concise and semantically close to the original.
 
 REQUIREMENTS:
 - Provide exactly 3 different versions
-- Use sophisticated vocabulary and professional language
-- Maintain the original meaning precisely
-- Each version should be 100-120% of the original length
-- Use proper grammar and formal sentence structure
-- Avoid contractions and casual expressions
+- Use professional language without being overly verbose
+- Maintain the EXACT original meaning - do not add interpretations or explanations
+- Each version should be similar in length to the original (90-110%)
+- Stick closely to the original structure and semantics
+- Only improve formality, do not elaborate or explain
 
 Format your response as:
 1. [First formal version]
@@ -166,15 +166,15 @@ Format your response as:
 Original text: "$text"''';
 
       case ParaphraseMode.simple:
-        return '''Simplify the following text to make it easier to understand while keeping the same meaning.
+        return '''Simplify the following text to make it easier to understand. Keep it semantically close to the original.
 
 REQUIREMENTS:
 - Provide exactly 3 different simplified versions
-- Use common, everyday words
-- Break complex sentences into shorter ones
-- Maintain clarity and readability
-- Each version should be 90-110% of the original length
-- Keep the core message intact
+- Use common, everyday words without changing the core meaning
+- Maintain similar length to the original (90-110%)
+- Do not add extra explanations or interpretations
+- Keep the same ideas, just make them clearer
+- Stick closely to the original message
 
 Format your response as:
 1. [First simplified version]
@@ -193,7 +193,7 @@ REQUIREMENTS:
 - Remove redundant words and filler phrases
 - Combine ideas efficiently
 - Keep all critical information
-- Each version should be 60-80% of the original length
+- Each version should be 70-90% of the original length
 - Maintain clarity despite brevity
 
 Format your response as:
@@ -206,15 +206,15 @@ Format your response as:
 Original text: "$text"''';
 
       case ParaphraseMode.creative:
-        return '''Rephrase the following text in creative and engaging ways while maintaining its meaning.
+        return '''Rephrase the following text in creative ways. Keep it semantically faithful to the original.
 
 REQUIREMENTS:
 - Provide exactly 3 different creative versions
-- Use vivid vocabulary and varied expressions
-- Employ different sentence structures and styles
-- Make it engaging and interesting to read
-- Each version should be 90-120% of the original length
-- Preserve the original message and tone
+- Use varied expressions and interesting word choices
+- Maintain the EXACT original meaning without embellishment
+- Each version should be similar in length (90-110%)
+- Be creative with phrasing, not with adding new ideas
+- Stick closely to what the original says
 
 Format your response as:
 1. [First creative version]

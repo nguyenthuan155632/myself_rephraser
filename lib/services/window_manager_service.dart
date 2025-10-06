@@ -1,18 +1,17 @@
-import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowManagerService extends WindowListener {
   static WindowManagerService? _instance;
-  static WindowManagerService get instance => _instance ??= WindowManagerService._();
-  
+  static WindowManagerService get instance =>
+      _instance ??= WindowManagerService._();
+
   WindowManagerService._();
 
   bool _isInitialized = false;
-  bool _isSystemTrayInitialized = false;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     windowManager.addListener(this);
     _isInitialized = true;
   }
@@ -32,10 +31,10 @@ class WindowManagerService extends WindowListener {
   Future<void> hideToSystemTray() async {
     try {
       print('WindowManagerService: Hiding to system tray...');
-      
+
       // Instead of hiding completely, just minimize and move to back
       await windowManager.minimize();
-      
+
       print('WindowManagerService: Window minimized (app stays running)');
     } catch (e) {
       print('WindowManagerService: Failed to minimize window: $e');
@@ -51,6 +50,28 @@ class WindowManagerService extends WindowListener {
       print('WindowManagerService: Window shown successfully');
     } catch (e) {
       print('WindowManagerService: Failed to show window: $e');
+    }
+  }
+
+  Future<void> maximizeWindow() async {
+    try {
+      final isMaximized = await windowManager.isMaximized();
+      if (isMaximized) {
+        await windowManager.unmaximize();
+      } else {
+        await windowManager.maximize();
+      }
+    } catch (e) {
+      print('WindowManagerService: Failed to maximize/restore window: $e');
+    }
+  }
+
+  Future<bool> isMaximized() async {
+    try {
+      return await windowManager.isMaximized();
+    } catch (e) {
+      print('WindowManagerService: Failed to check maximize state: $e');
+      return false;
     }
   }
 

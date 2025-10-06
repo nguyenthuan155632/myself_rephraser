@@ -5,7 +5,7 @@ import '../core/paraphrase_provider.dart';
 import '../widgets/settings_screen.dart';
 import '../services/system_integration_service.dart';
 import '../services/window_manager_service.dart';
-import 'csv_reader_screen.dart';
+import 'csv_reader_screen_modern.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -625,6 +625,30 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
                                     ).colorScheme.outline.withOpacity(0.3),
                                   ),
                                   TextButton.icon(
+                                    onPressed: () async {
+                                      await WindowManagerService.instance
+                                          .maximizeWindow();
+                                      setState(() {});
+                                    },
+                                    icon: const Icon(
+                                      Icons.open_in_full,
+                                      size: 18,
+                                    ),
+                                    label: const Text('Maximize'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 24,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.3),
+                                  ),
+                                  TextButton.icon(
                                     onPressed: () {
                                       _showQuitConfirmation();
                                     },
@@ -663,7 +687,7 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   void _openCsvReader() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const CsvReaderScreen(),
+        builder: (context) => const CsvReaderScreenModern(),
       ),
     );
   }

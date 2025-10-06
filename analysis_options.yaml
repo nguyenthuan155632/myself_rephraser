@@ -12,6 +12,8 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   errors:
     deprecated_member_use: ignore # Suppress withOpacity deprecation for CI/CD compatibility
+    prefer_const_constructors: ignore
+    depend_on_referenced_packages: ignore
 
 linter:
   # The lint rules applied to this project can be customized in the

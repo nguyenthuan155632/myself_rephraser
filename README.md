@@ -60,8 +60,8 @@ Transform your text with intelligent AI rephrasing at the press of a hotkey. Get
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/myself_rephaser.git
-cd myself_rephaser
+git clone https://github.com/yourusername/myself_rephraser.git
+cd myself_rephraser
 ```
 
 2. **Install dependencies**
@@ -102,7 +102,7 @@ flutter run -d linux
 flutter build macos --release
 
 # Output location:
-# build/macos/Build/Products/Release/myself_rephaser.app
+# build/macos/Build/Products/Release/myself_rephraser.app
 
 # Create DMG (requires create-dmg)
 brew install create-dmg
@@ -112,10 +112,10 @@ create-dmg \
   --window-pos 200 120 \
   --window-size 800 400 \
   --icon-size 100 \
-  --icon "myself_rephaser.app" 200 190 \
+  --icon "myself_rephraser.app" 200 190 \
   --app-drop-link 600 185 \
   "MyselfRephraser.dmg" \
-  "build/macos/Build/Products/Release/myself_rephaser.app"
+  "build/macos/Build/Products/Release/myself_rephraser.app"
 ```
 
 ### Build for Windows
@@ -151,11 +151,11 @@ SolidCompression=yes
 Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{group}\Myself Rephraser"; Filename: "{app}\myself_rephaser.exe"
-Name: "{autodesktop}\Myself Rephraser"; Filename: "{app}\myself_rephaser.exe"
+Name: "{group}\Myself Rephraser"; Filename: "{app}\myself_rephraser.exe"
+Name: "{autodesktop}\Myself Rephraser"; Filename: "{app}\myself_rephraser.exe"
 
 [Run]
-Filename: "{app}\myself_rephaser.exe"; Description: "Launch Myself Rephraser"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\myself_rephraser.exe"; Description: "Launch Myself Rephraser"; Flags: postinstall nowait skipifsilent
 ```
 
 ### Build for Linux
@@ -182,7 +182,7 @@ chmod +x appimagetool-x86_64.AppImage
 ## 🏗️ Project Structure
 
 ```
-myself_rephaser/
+myself_rephraser/
 ├── lib/
 │   ├── core/                    # Core business logic
 │   │   └── paraphrase_provider.dart

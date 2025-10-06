@@ -316,7 +316,7 @@ Each paraphrase result shows:
 ### Getting Help
 
 If issues persist:
-1. Check the [GitHub Issues](https://github.com/yourusername/myself-rephaser/issues)
+1. Check the [GitHub Issues](https://github.com/yourusername/myself-rephraser/issues)
 2. Email support: nt.apple.it@gmail.com
 3. Include error messages and steps to reproduce
 

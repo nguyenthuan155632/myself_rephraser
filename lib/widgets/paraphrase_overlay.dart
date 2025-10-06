@@ -113,8 +113,8 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                               ),
                             )
                           : _lastResponse != null
-                          ? _buildResultView(_lastResponse!)
-                          : _buildInputView(provider),
+                              ? _buildResultView(_lastResponse!)
+                              : _buildInputView(provider),
                     ),
                   ),
                 ],
@@ -172,19 +172,19 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                 Text(
                   'Text Rephraser',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Transform your text with AI',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onPrimaryContainer.withOpacity(0.7),
-                  ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onPrimaryContainer.withOpacity(0.7),
+                      ),
                 ),
               ],
             ),
@@ -214,16 +214,16 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
           Text(
             'Enter text to paraphrase',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
-            ),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.5,
+                ),
           ),
           const SizedBox(height: 8),
           Text(
             'Paste or type your text below, select a mode, and let AI transform it',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 24),
           Container(
@@ -233,7 +233,7 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                 BoxShadow(
                   color: Theme.of(
                     context,
-                  ).colorScheme.primary.withValues(alpha: 0.05),
+                  ).colorScheme.primary.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -287,7 +287,7 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                 BoxShadow(
                   color: Theme.of(
                     context,
-                  ).colorScheme.primary.withValues(alpha: 0.05),
+                  ).colorScheme.primary.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -464,16 +464,17 @@ class _ParaphraseOverlayState extends State<ParaphraseOverlay> {
                     Text(
                       'Paraphrase Complete!',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Choose an option below or create a new paraphrase',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                   ],
                 ),

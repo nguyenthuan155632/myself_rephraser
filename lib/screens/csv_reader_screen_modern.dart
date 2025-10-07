@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:ui';
+import 'dart:isolate';
 
 import '../models/csv_undoable_actions.dart';
 import '../services/csv_file_service.dart';
@@ -68,6 +70,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
   bool _useRegex = false;
   bool _showAdvancedSearch = false;
   String _searchQuery = '';
+  Timer? _searchDebounceTimer;
 
   // Drag & drop state
   int? _draggingColumnIndex;
@@ -153,6 +156,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     _verticalScrollController.removeListener(_onScroll);
     _horizontalScrollController.dispose();
     _verticalScrollController.dispose();
@@ -844,6 +848,18 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
 
   Future<void> _readCsvFileGradually(File file, {Encoding? encoding}) async {
     try {
+      // First, check file size quickly
+      final fileSize = await file.length();
+      final estimatedRows =
+          (fileSize / 100).round(); // Rough estimate: ~100 bytes per row
+
+      // For very large files (>5MB or estimated >50k rows), use streaming
+      if (fileSize > 5 * 1024 * 1024 || estimatedRows > 50000) {
+        await _readCsvFileWithStreaming(file, encoding ?? utf8);
+        return;
+      }
+
+      // For smaller files, use the fast in-memory approach
       final csvFileData =
           await CsvFileService.readCsvFile(file, encoding: encoding);
 
@@ -890,6 +906,180 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
     }
   }
 
+  /// Fast streaming load with animated dialog to mask any freeze
+  Future<void> _readCsvFileWithStreaming(File file, Encoding encoding) async {
+    String? loadingFileName = file.path.split('/').last;
+
+    try {
+      // Show ANIMATED loading dialog BEFORE any heavy work
+      // This ensures the animation starts smoothly
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) =>
+              _AnimatedLoadingDialog(fileName: loadingFileName),
+        );
+      }
+
+      // Small delay to ensure dialog animation starts
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final List<List<String>> allRows = [];
+      List<String>? headers;
+
+      // Fast bulk parse - no interruptions for maximum speed
+      await for (final line in file
+          .openRead()
+          .transform(encoding.decoder)
+          .transform(const LineSplitter())) {
+        final List<String> row = _parseCsvLineStatic(line);
+
+        if (headers == null) {
+          headers = row;
+        } else {
+          allRows.add(row);
+        }
+      }
+
+      // Close dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Apply data
+      if (mounted) {
+        setState(() {
+          _currentFile = file;
+          _fileName = file.path.split('/').last;
+          _headers = headers ?? [];
+          _allCsvData = allRows;
+          _filteredData = allRows;
+          _totalRows = allRows.length;
+          _rebuildFilteredIndexMapping();
+          _initializeColumnWidths();
+          _isLoading = false;
+          _listKey = UniqueKey();
+        });
+
+        await _historyService.startNewSession(_fileName!);
+        await _createHistorySnapshot('Loaded file: $_fileName',
+            actionType: 'initial');
+
+        _showSnackBar(
+          'Loaded ${_formatNumber(_totalRows)} rows successfully',
+          type: SnackBarType.success,
+        );
+      }
+    } catch (e) {
+      if (e.toString().contains('decode') ||
+          e.toString().contains('FormatException')) {
+        if (mounted) {
+          Navigator.of(context).pop();
+          final encodingName = await _showEncodingDialog();
+          if (encodingName != null) {
+            final selectedEncoding =
+                CsvFileService.getEncodingFromString(encodingName);
+            await _readCsvFileWithStreaming(file, selectedEncoding);
+          } else {
+            setState(() => _isLoading = false);
+          }
+        }
+      } else {
+        if (mounted) {
+          Navigator.of(context).pop();
+          setState(() => _isLoading = false);
+          _showSnackBar('Error loading CSV: $e', type: SnackBarType.error);
+        }
+      }
+    }
+  }
+
+  /// Background isolate function to parse CSV with chunked transfer
+  static void _parseCsvInIsolate(_CsvParseParams params) async {
+    try {
+      final file = File(params.filePath);
+      final List<List<String>> allRows = [];
+      List<String>? headers;
+      int rowCount = 0;
+      final int progressInterval = 10000; // Send progress every 10k rows
+      final int chunkSize = 50000; // Send data in chunks of 50k rows
+      int lastProgressUpdate = 0;
+      int lastChunkSent = 0;
+
+      await for (final line in file
+          .openRead()
+          .transform(params.encoding.decoder)
+          .transform(const LineSplitter())) {
+        final List<String> row = _parseCsvLineStatic(line);
+
+        if (headers == null) {
+          headers = row;
+          // Send headers immediately
+          params.sendPort.send(CsvParseHeaders(headers));
+        } else {
+          allRows.add(row);
+          rowCount++;
+
+          // Send progress update
+          if (rowCount - lastProgressUpdate >= progressInterval) {
+            params.sendPort.send(CsvParseProgress(rowCount));
+            lastProgressUpdate = rowCount;
+          }
+
+          // Send data in chunks to avoid large transfer freeze
+          if (rowCount - lastChunkSent >= chunkSize) {
+            final chunkStart = lastChunkSent;
+            final chunk = allRows.sublist(chunkStart, rowCount);
+            params.sendPort.send(CsvParseChunk(chunk, chunkStart));
+            lastChunkSent = rowCount;
+          }
+        }
+      }
+
+      // Send remaining data as final chunk
+      if (lastChunkSent < rowCount) {
+        final chunk = allRows.sublist(lastChunkSent);
+        params.sendPort.send(CsvParseChunk(chunk, lastChunkSent));
+      }
+
+      // Send completion signal
+      params.sendPort.send(CsvParseComplete(rowCount));
+    } catch (e) {
+      final isEncodingError = e.toString().contains('decode') ||
+          e.toString().contains('FormatException');
+      params.sendPort.send(CsvParseError(e.toString(), isEncodingError));
+    }
+  }
+
+  /// Static version of CSV parser for use in isolate
+  static List<String> _parseCsvLineStatic(String line) {
+    final List<String> result = [];
+    bool inQuotes = false;
+    StringBuffer current = StringBuffer();
+
+    for (int i = 0; i < line.length; i++) {
+      final char = line[i];
+
+      if (char == '"') {
+        if (inQuotes && i + 1 < line.length && line[i + 1] == '"') {
+          current.write('"');
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char == ',' && !inQuotes) {
+        result.add(current.toString());
+        current = StringBuffer();
+      } else {
+        current.write(char);
+      }
+    }
+    result.add(current.toString());
+
+    return result;
+  }
+
   void _rebuildFilteredIndexMapping() {
     _filteredIndexToOriginalIndex.clear();
     if (_filteredData.isEmpty) return;
@@ -910,75 +1100,89 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
   }
 
   void _filterData(String query) {
+    // Cancel previous timer
+    _searchDebounceTimer?.cancel();
+
+    // Update UI immediately for responsive feel
     setState(() {
       _searchQuery = query;
+    });
 
-      if (query.isEmpty &&
-          _selectedSearchColumns.isEmpty &&
-          _rowRangeStart == null &&
-          _rowRangeEnd == null) {
+    // Clear results immediately if query is empty
+    if (query.isEmpty &&
+        _selectedSearchColumns.isEmpty &&
+        _rowRangeStart == null &&
+        _rowRangeEnd == null) {
+      setState(() {
         _filteredData = _allCsvData;
         _rebuildFilteredIndexMapping();
-        return;
-      }
+      });
+      return;
+    }
 
-      _filteredData = _allCsvData
-          .asMap()
-          .entries
-          .where((entry) {
-            final rowIndex = entry.key;
-            final row = entry.value;
+    // Debounce the actual filtering by 150ms (shorter for in-memory data)
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
 
-            if (_rowRangeStart != null && rowIndex < _rowRangeStart! - 1) {
-              return false;
-            }
-            if (_rowRangeEnd != null && rowIndex > _rowRangeEnd! - 1) {
-              return false;
-            }
+      setState(() {
+        _filteredData = _allCsvData
+            .asMap()
+            .entries
+            .where((entry) {
+              final rowIndex = entry.key;
+              final row = entry.value;
 
-            if (query.isEmpty) {
-              return true;
-            }
+              if (_rowRangeStart != null && rowIndex < _rowRangeStart! - 1) {
+                return false;
+              }
+              if (_rowRangeEnd != null && rowIndex > _rowRangeEnd! - 1) {
+                return false;
+              }
 
-            final columnsToSearch = _selectedSearchColumns.isEmpty
-                ? List.generate(row.length, (i) => i)
-                : _selectedSearchColumns.toList();
+              if (query.isEmpty) {
+                return true;
+              }
 
-            try {
-              if (_useRegex) {
-                final regex = RegExp(query, caseSensitive: _caseSensitive);
+              final columnsToSearch = _selectedSearchColumns.isEmpty
+                  ? List.generate(row.length, (i) => i)
+                  : _selectedSearchColumns.toList();
+
+              try {
+                if (_useRegex) {
+                  final regex = RegExp(query, caseSensitive: _caseSensitive);
+                  return columnsToSearch.any((colIndex) {
+                    if (colIndex < row.length) {
+                      return regex.hasMatch(row[colIndex]);
+                    }
+                    return false;
+                  });
+                } else {
+                  final searchQuery =
+                      _caseSensitive ? query : query.toLowerCase();
+                  return columnsToSearch.any((colIndex) {
+                    if (colIndex < row.length) {
+                      final cellValue = _caseSensitive
+                          ? row[colIndex]
+                          : row[colIndex].toLowerCase();
+                      return cellValue.contains(searchQuery);
+                    }
+                    return false;
+                  });
+                }
+              } catch (e) {
+                final searchQuery = query.toLowerCase();
                 return columnsToSearch.any((colIndex) {
                   if (colIndex < row.length) {
-                    return regex.hasMatch(row[colIndex]);
-                  }
-                  return false;
-                });
-              } else {
-                final searchQuery =
-                    _caseSensitive ? query : query.toLowerCase();
-                return columnsToSearch.any((colIndex) {
-                  if (colIndex < row.length) {
-                    final cellValue = _caseSensitive
-                        ? row[colIndex]
-                        : row[colIndex].toLowerCase();
-                    return cellValue.contains(searchQuery);
+                    return row[colIndex].toLowerCase().contains(searchQuery);
                   }
                   return false;
                 });
               }
-            } catch (e) {
-              final searchQuery = query.toLowerCase();
-              return columnsToSearch.any((colIndex) {
-                if (colIndex < row.length) {
-                  return row[colIndex].toLowerCase().contains(searchQuery);
-                }
-                return false;
-              });
-            }
-          })
-          .map((entry) => entry.value)
-          .toList();
-      _rebuildFilteredIndexMapping();
+            })
+            .map((entry) => entry.value)
+            .toList();
+        _rebuildFilteredIndexMapping();
+      });
     });
   }
 
@@ -991,6 +1195,13 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
       _useRegex = false;
       _filteredData = _allCsvData;
     });
+  }
+
+  String _formatNumber(int number) {
+    return number.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
   }
 
   void _showSnackBar(String message, {SnackBarType type = SnackBarType.info}) {
@@ -2156,6 +2367,336 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// Helper classes for background CSV parsing with Isolate
+// ============================================================================
+
+/// Parameters for CSV parsing in isolate
+class _CsvParseParams {
+  final String filePath;
+  final Encoding encoding;
+  final SendPort sendPort;
+
+  _CsvParseParams({
+    required this.filePath,
+    required this.encoding,
+    required this.sendPort,
+  });
+}
+
+/// Headers message
+class CsvParseHeaders {
+  final List<String> headers;
+  CsvParseHeaders(this.headers);
+}
+
+/// Progress update message
+class CsvParseProgress {
+  final int rowsLoaded;
+  CsvParseProgress(this.rowsLoaded);
+}
+
+/// Data chunk message
+class CsvParseChunk {
+  final List<List<String>> chunk;
+  final int startIndex;
+  CsvParseChunk(this.chunk, this.startIndex);
+}
+
+/// Completion message
+class CsvParseComplete {
+  final int totalRows;
+  CsvParseComplete(this.totalRows);
+}
+
+/// Error message
+class CsvParseError {
+  final String error;
+  final bool isEncodingError;
+
+  CsvParseError(this.error, this.isEncodingError);
+}
+
+/// Loading progress dialog
+class _LoadingProgressDialog extends StatefulWidget {
+  final Stream<int> progressStream;
+  final String fileName;
+
+  const _LoadingProgressDialog({
+    required this.progressStream,
+    required this.fileName,
+  });
+
+  @override
+  State<_LoadingProgressDialog> createState() => _LoadingProgressDialogState();
+}
+
+class _LoadingProgressDialogState extends State<_LoadingProgressDialog> {
+  int _rowsLoaded = 0;
+  StreamSubscription<int>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscription = widget.progressStream.listen((rowsLoaded) {
+      if (mounted) {
+        setState(() {
+          _rowsLoaded = rowsLoaded;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  String _formatNumber(int number) {
+    return number.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Loading CSV File',
+              style: CsvTheme.headingSmall.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              widget.fileName,
+              style: CsvTheme.bodyMedium.copyWith(
+                color: CsvTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (_rowsLoaded > 0) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: CsvTheme.primaryLight,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.table_rows,
+                        color: CsvTheme.primaryColor, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_formatNumber(_rowsLoaded)} rows loaded...',
+                      style: CsvTheme.labelMedium.copyWith(
+                        color: CsvTheme.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Text(
+              'Processing in background thread...',
+              style: CsvTheme.bodySmall.copyWith(
+                color: CsvTheme.textTertiary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated loading dialog with continuous animation
+class _AnimatedLoadingDialog extends StatefulWidget {
+  final String fileName;
+
+  const _AnimatedLoadingDialog({required this.fileName});
+
+  @override
+  State<_AnimatedLoadingDialog> createState() => _AnimatedLoadingDialogState();
+}
+
+class _AnimatedLoadingDialogState extends State<_AnimatedLoadingDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  int _dotCount = 0;
+  Timer? _dotTimer;
+
+  final List<String> _loadingMessages = [
+    'Reading file',
+    'Parsing CSV data',
+    'Processing rows',
+    'Almost there',
+  ];
+  int _messageIndex = 0;
+  Timer? _messageTimer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Pulse animation for the icon
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    // Animated dots
+    _dotTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      if (mounted) {
+        setState(() {
+          _dotCount = (_dotCount + 1) % 4;
+        });
+      }
+    });
+
+    // Rotate messages
+    _messageTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (mounted) {
+        setState(() {
+          _messageIndex = (_messageIndex + 1) % _loadingMessages.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _dotTimer?.cancel();
+    _messageTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 8,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Animated icon
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: CsvTheme.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.analytics_outlined,
+                  size: 48,
+                  color: CsvTheme.primaryColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Spinning progress indicator
+            const SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(CsvTheme.primaryColor),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Text(
+              'Loading Large CSV File',
+              style: CsvTheme.headingSmall.copyWith(
+                fontWeight: FontWeight.bold,
+                color: CsvTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Filename
+            Text(
+              widget.fileName,
+              style: CsvTheme.bodyMedium.copyWith(
+                color: CsvTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 20),
+
+            // Animated loading message with dots
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: CsvTheme.primaryLight.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${_loadingMessages[_messageIndex]}${"." * _dotCount}',
+                style: CsvTheme.bodySmall.copyWith(
+                  color: CsvTheme.primaryColor,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Helpful tip
+            Text(
+              '💡 Tip: Click "Ignore" if macOS shows a warning',
+              style: CsvTheme.bodyExtraSmall.copyWith(
+                color: CsvTheme.textTertiary,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

@@ -6,6 +6,7 @@ import '../widgets/settings_screen.dart';
 import '../services/system_integration_service.dart';
 import '../services/window_manager_service.dart';
 import 'csv_reader_screen_modern.dart';
+import 'csv_reader_screen_optimized.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -685,9 +686,150 @@ class _MainScreenState extends State<MainScreen> with WindowListener {
   }
 
   void _openCsvReader() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CsvReaderScreenModern(),
+    // Show mode selection dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choose CSV Reader Mode'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Select the mode that best fits your needs:',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            _buildModeOption(
+              context,
+              icon: Icons.flash_on,
+              title: 'Optimized Mode',
+              description:
+                  'Best for large files (>50k rows). No freeze, smooth performance.',
+              color: Colors.blue,
+              recommended: true,
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CsvReaderScreenOptimized(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildModeOption(
+              context,
+              icon: Icons.speed,
+              title: 'Fast Mode',
+              description:
+                  'Best for small files (<50k rows). Instant after loading.',
+              color: Colors.green,
+              recommended: false,
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CsvReaderScreenModern(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required bool recommended,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: recommended ? color : Colors.grey.shade300,
+            width: recommended ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: recommended ? color.withOpacity(0.05) : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: color,
+                        ),
+                      ),
+                      if (recommended) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'RECOMMENDED',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

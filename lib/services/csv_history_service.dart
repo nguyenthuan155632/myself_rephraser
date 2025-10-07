@@ -21,8 +21,14 @@ class CsvHistoryService {
   /// Maximum number of history entries to keep
   static const int maxHistoryEntries = 50;
 
+  bool _isInitialized = false;
+
   /// Initialize history service
   Future<void> initialize() async {
+    if (_isInitialized) {
+      return;
+    }
+
     // Get system temp directory
     final tempDir = Directory.systemTemp;
     _historyBaseDir =
@@ -35,6 +41,30 @@ class CsvHistoryService {
 
     // Clean up old session directories (older than 7 days)
     await _cleanOldSessions();
+
+    _isInitialized = true;
+  }
+
+  /// Remove history entries after the provided index
+  Future<void> truncateAfter(int index) async {
+    if (index >= _historyEntries.length - 1) {
+      return;
+    }
+
+    int start = index + 1;
+    if (start < 0) {
+      start = 0;
+    }
+    if (start >= _historyEntries.length) {
+      return;
+    }
+
+    final removed = _historyEntries.sublist(start).toList();
+    _historyEntries.removeRange(start, _historyEntries.length);
+
+    for (final entry in removed) {
+      await _deleteSnapshot(entry.filePath);
+    }
   }
 
   /// Start a new history session for a CSV file

@@ -63,195 +63,205 @@ class CsvToolbar extends StatelessWidget {
         ),
         boxShadow: const [CsvTheme.shadowSm],
       ),
-      child: Row(
-        children: [
-          const SizedBox(width: CsvTheme.spacingMd),
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: Row(
+              children: [
+                const SizedBox(width: CsvTheme.spacingMd),
 
-          // File actions
-          _buildToolbarSection([
-            _buildIconButton(
-              icon: Icons.folder_open_outlined,
-              tooltip: 'Open File',
-              onPressed: onNewFile,
-            ),
-            if (hasUnsavedChanges)
-              _buildIconButton(
-                icon: Icons.save_outlined,
-                tooltip: 'Save (Cmd+S)',
-                onPressed: onSave,
-                color: CsvTheme.primaryColor,
-                isActive: true,
-              ),
-          ]),
-
-          _buildDivider(),
-
-          // Undo/Redo
-          _buildToolbarSection([
-            _buildIconButton(
-              icon: Icons.undo_rounded,
-              tooltip: 'Undo (Cmd+Z)',
-              onPressed: canUndo ? onUndo : null,
-            ),
-            _buildIconButton(
-              icon: Icons.redo_rounded,
-              tooltip: 'Redo (Cmd+Shift+Z)',
-              onPressed: canRedo ? onRedo : null,
-            ),
-          ]),
-
-          _buildDivider(),
-
-          // Row/Column actions
-          _buildToolbarSection([
-            _buildIconButton(
-              icon: Icons.add_box_outlined,
-              tooltip: 'Add New Row',
-              onPressed: onAddRow,
-            ),
-            _buildIconButton(
-              icon: Icons.view_column_outlined,
-              tooltip: 'Add New Column',
-              onPressed: onAddColumn,
-            ),
-            if (selectedRowsCount > 0)
-              _buildIconButton(
-                icon: Icons.delete_outline,
-                tooltip: 'Delete Selected Rows ($selectedRowsCount)',
-                onPressed: onDeleteRows,
-                color: CsvTheme.errorColor,
-              ),
-            if (selectedRowsCount >= 2)
-              _buildIconButton(
-                icon: Icons.merge_outlined,
-                tooltip: 'Merge Selected Rows',
-                onPressed: onMergeRows,
-                color: CsvTheme.primaryColor,
-              ),
-            if (selectedRowsCount > 0 || selectedCellsCount > 0)
-              _buildSplitMenu(),
-          ]),
-
-          _buildDivider(),
-
-          // Checkbox toggle
-          _buildIconButton(
-            icon: showCheckboxes
-                ? Icons.check_box_outlined
-                : Icons.check_box_outline_blank,
-            tooltip: showCheckboxes ? 'Hide Selection' : 'Show Selection',
-            onPressed: onToggleCheckboxes,
-            isActive: showCheckboxes,
-          ),
-
-          // Cleanup menu
-          _buildCleanupMenu(),
-
-          // Encoding
-          _buildIconButton(
-            icon: Icons.translate_outlined,
-            tooltip: 'Change Encoding',
-            onPressed: onChangeEncoding,
-          ),
-
-          const Spacer(),
-
-          // Cell selection indicator
-          if (selectedCellsCount > 0) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: CsvTheme.spacingMd,
-                vertical: CsvTheme.spacingSm,
-              ),
-              decoration: BoxDecoration(
-                color: CsvTheme.primaryLight,
-                borderRadius: BorderRadius.circular(CsvTheme.radiusMd),
-                border:
-                    Border.all(color: CsvTheme.primaryColor.withOpacity(0.2)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$selectedCellsCount cells selected',
-                    style: CsvTheme.bodySmall.copyWith(
+                // File actions
+                _buildToolbarSection([
+                  _buildIconButton(
+                    icon: Icons.folder_open_outlined,
+                    tooltip: 'Open File',
+                    onPressed: onNewFile,
+                  ),
+                  if (hasUnsavedChanges)
+                    _buildIconButton(
+                      icon: Icons.save_outlined,
+                      tooltip: 'Save (Cmd+S)',
+                      onPressed: onSave,
                       color: CsvTheme.primaryColor,
-                      fontWeight: FontWeight.w500,
+                      isActive: true,
                     ),
-                  ),
-                  const SizedBox(width: CsvTheme.spacingSm),
-                  InkWell(
-                    onTap: onBulkEdit,
-                    borderRadius: BorderRadius.circular(CsvTheme.radiusSm),
-                    child: Padding(
-                      padding: const EdgeInsets.all(2),
-                      child: Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: CsvTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: CsvTheme.spacingXs),
-                  InkWell(
-                    onTap: onClearCellSelection,
-                    borderRadius: BorderRadius.circular(CsvTheme.radiusSm),
-                    child: Padding(
-                      padding: const EdgeInsets.all(2),
-                      child: Icon(
-                        Icons.close,
-                        size: 16,
-                        color: CsvTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: CsvTheme.spacingMd),
-          ],
+                ]),
 
-          // Unsaved indicator
-          if (hasUnsavedChanges && selectedCellsCount == 0) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: CsvTheme.spacingMd,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: CsvTheme.warningColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(CsvTheme.radiusSm),
-                border: Border.all(
-                  color: CsvTheme.warningColor.withOpacity(0.3),
+                _buildDivider(),
+
+                // Undo/Redo
+                _buildToolbarSection([
+                  _buildIconButton(
+                    icon: Icons.undo_rounded,
+                    tooltip: 'Undo (Cmd+Z)',
+                    onPressed: canUndo ? onUndo : null,
+                  ),
+                  _buildIconButton(
+                    icon: Icons.redo_rounded,
+                    tooltip: 'Redo (Cmd+Shift+Z)',
+                    onPressed: canRedo ? onRedo : null,
+                  ),
+                ]),
+
+                _buildDivider(),
+
+                // Row/Column actions
+                _buildToolbarSection([
+                  _buildIconButton(
+                    icon: Icons.add_box_outlined,
+                    tooltip: 'Add New Row',
+                    onPressed: onAddRow,
+                  ),
+                  _buildIconButton(
+                    icon: Icons.view_column_outlined,
+                    tooltip: 'Add New Column',
+                    onPressed: onAddColumn,
+                  ),
+                  if (selectedRowsCount > 0)
+                    _buildIconButton(
+                      icon: Icons.delete_outline,
+                      tooltip: 'Delete Selected Rows ($selectedRowsCount)',
+                      onPressed: onDeleteRows,
+                      color: CsvTheme.errorColor,
+                    ),
+                  if (selectedRowsCount >= 2)
+                    _buildIconButton(
+                      icon: Icons.merge_outlined,
+                      tooltip: 'Merge Selected Rows',
+                      onPressed: onMergeRows,
+                      color: CsvTheme.primaryColor,
+                    ),
+                  if (selectedRowsCount > 0 || selectedCellsCount > 0)
+                    _buildSplitMenu(),
+                ]),
+
+                _buildDivider(),
+
+                // Checkbox toggle
+                _buildIconButton(
+                  icon: showCheckboxes
+                      ? Icons.check_box_outlined
+                      : Icons.check_box_outline_blank,
+                  tooltip: showCheckboxes ? 'Hide Selection' : 'Show Selection',
+                  onPressed: onToggleCheckboxes,
+                  isActive: showCheckboxes,
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: CsvTheme.warningColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Unsaved',
-                    style: CsvTheme.labelMedium.copyWith(
-                      color: CsvTheme.warningColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: CsvTheme.spacingMd),
-          ],
 
-          const SizedBox(width: CsvTheme.spacingLg),
-        ],
+                // Cleanup menu
+                _buildCleanupMenu(),
+
+                // Encoding
+                _buildIconButton(
+                  icon: Icons.translate_outlined,
+                  tooltip: 'Change Encoding',
+                  onPressed: onChangeEncoding,
+                ),
+
+                const SizedBox(width: CsvTheme.spacingLg),
+
+                // Cell selection indicator
+                if (selectedCellsCount > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: CsvTheme.spacingMd,
+                      vertical: CsvTheme.spacingSm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: CsvTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(CsvTheme.radiusMd),
+                      border: Border.all(
+                          color: CsvTheme.primaryColor.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$selectedCellsCount cells selected',
+                          style: CsvTheme.bodySmall.copyWith(
+                            color: CsvTheme.primaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: CsvTheme.spacingSm),
+                        InkWell(
+                          onTap: onBulkEdit,
+                          borderRadius: BorderRadius.circular(
+                              CsvTheme.radiusSm),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: Icon(
+                              Icons.edit_outlined,
+                              size: 16,
+                              color: CsvTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: CsvTheme.spacingXs),
+                        InkWell(
+                          onTap: onClearCellSelection,
+                          borderRadius: BorderRadius.circular(
+                              CsvTheme.radiusSm),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: Icon(
+                              Icons.close,
+                              size: 16,
+                              color: CsvTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: CsvTheme.spacingMd),
+                ],
+
+                // Unsaved indicator
+                if (hasUnsavedChanges && selectedCellsCount == 0) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: CsvTheme.spacingMd,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: CsvTheme.warningColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(CsvTheme.radiusSm),
+                      border: Border.all(
+                        color: CsvTheme.warningColor.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: CsvTheme.warningColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Unsaved',
+                          style: CsvTheme.labelMedium.copyWith(
+                            color: CsvTheme.warningColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: CsvTheme.spacingMd),
+                ],
+
+                const SizedBox(width: CsvTheme.spacingLg),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

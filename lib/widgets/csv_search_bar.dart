@@ -20,7 +20,10 @@ class CsvSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(CsvTheme.spacingLg),
+      padding: const EdgeInsets.symmetric(
+        horizontal: CsvTheme.spacingLg,
+        vertical: CsvTheme.spacingSm,
+      ),
       decoration: const BoxDecoration(
         color: CsvTheme.surfaceColor,
         border: Border(
@@ -31,57 +34,68 @@ class CsvSearchBar extends StatelessWidget {
         children: [
           Expanded(
             child: Container(
+              height: 36,
               decoration: BoxDecoration(
                 color: CsvTheme.backgroundColor,
-                borderRadius: BorderRadius.circular(CsvTheme.radiusLg),
+                borderRadius: BorderRadius.circular(CsvTheme.radiusMd),
                 border: Border.all(color: CsvTheme.borderColor),
               ),
+              alignment: Alignment.center,
               child: TextField(
                 onChanged: onSearch,
-                style: CsvTheme.bodyMedium,
+                style: CsvTheme.bodyMedium.copyWith(fontSize: 13),
+                textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
                   hintText: 'Search in table...',
                   hintStyle: CsvTheme.bodyMedium.copyWith(
                     color: CsvTheme.textTertiary,
+                    fontSize: 13,
                   ),
                   prefixIcon: const Icon(
                     Icons.search,
-                    size: 20,
+                    size: 18,
                     color: CsvTheme.textTertiary,
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 36,
                   ),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (hasActiveFilters)
                         IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
+                          icon: const Icon(Icons.clear, size: 16),
                           onPressed: onResetFilters,
                           tooltip: 'Clear filters',
                           color: CsvTheme.textSecondary,
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
                           constraints: const BoxConstraints(),
                         ),
                       IconButton(
                         icon: Icon(
                           showAdvanced ? Icons.expand_less : Icons.tune,
-                          size: 20,
+                          size: 18,
                         ),
                         onPressed: onToggleAdvanced,
                         tooltip: 'Advanced search',
                         color: showAdvanced
                             ? CsvTheme.primaryColor
                             : CsvTheme.textSecondary,
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         constraints: const BoxConstraints(),
                       ),
                       const SizedBox(width: CsvTheme.spacingSm),
                     ],
                   ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: CsvTheme.spacingLg,
-                    vertical: CsvTheme.spacingMd,
+                  contentPadding: const EdgeInsets.only(
+                    left: CsvTheme.spacingMd,
+                    right: CsvTheme.spacingMd,
+                    top: 8,
+                    bottom: 8,
                   ),
+                  isDense: true,
                 ),
               ),
             ),
@@ -125,9 +139,9 @@ class CsvAdvancedSearch extends StatelessWidget {
         CsvTheme.spacingLg,
         0,
         CsvTheme.spacingLg,
-        CsvTheme.spacingLg,
+        CsvTheme.spacingMd,
       ),
-      padding: const EdgeInsets.all(CsvTheme.spacingLg),
+      padding: const EdgeInsets.all(CsvTheme.spacingMd),
       decoration: BoxDecoration(
         color: CsvTheme.surfaceColor,
         borderRadius: BorderRadius.circular(CsvTheme.radiusLg),

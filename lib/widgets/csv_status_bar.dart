@@ -29,10 +29,11 @@ class CsvStatusBar extends StatelessWidget {
           top: BorderSide(color: CsvTheme.borderColor, width: 1),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: CsvTheme.spacingLg),
+      padding: const EdgeInsets.only(
+          left: CsvTheme.spacingLg, right: CsvTheme.spacingSm),
       child: Row(
         children: [
-          // File name
+          // Left side items
           if (fileName != null) ...[
             Icon(
               Icons.insert_drive_file_outlined,
@@ -40,7 +41,8 @@ class CsvStatusBar extends StatelessWidget {
               color: CsvTheme.textTertiary,
             ),
             const SizedBox(width: CsvTheme.spacingSm),
-            Flexible(
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 150),
               child: Text(
                 fileName!,
                 style: CsvTheme.labelMedium,
@@ -91,11 +93,12 @@ class CsvStatusBar extends StatelessWidget {
 
           const Spacer(),
 
-          // Help text
+          // Help text - positioned at far right edge
           Text(
-            'Click cell to edit • Right-click for options',
+            'Double-click cell to edit • Right-click for options',
             style: CsvTheme.caption.copyWith(
               fontStyle: FontStyle.italic,
+              color: CsvTheme.textTertiary,
             ),
           ),
         ],

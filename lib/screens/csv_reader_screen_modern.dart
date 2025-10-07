@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:ui';
 
-// Import refactored components
 import '../models/csv_undoable_actions.dart';
 import '../services/csv_file_service.dart';
 import '../services/csv_history_service.dart';
@@ -39,6 +38,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
   File? _currentFile;
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _verticalScrollController = ScrollController();
+  final FocusNode _keyboardFocusNode = FocusNode();
   List<List<String>> _filteredData = [];
   Key _listKey = UniqueKey();
   final Map<int, int> _filteredIndexToOriginalIndex = {};
@@ -49,7 +49,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
 
   // Editing state
   bool _hasUnsavedChanges = false;
-  bool _showCheckboxes = true;
+  bool _showCheckboxes = false;
 
   // Column widths (index 0 is line number column)
   final List<double> _columnWidths = [];
@@ -77,11 +77,15 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
   bool _compactMode =
       false; // When true, show collapsed rows with truncated text
 
+  // Remember last directory path
+  String? _lastDirectoryPath;
+
   // Calculate line number column width based on number of rows
   double get _lineNumberColumnWidth {
     if (_totalRows == 0) return 60;
     final digits = _totalRows.toString().length;
-    return 40 + (digits * 10.0);
+    // Minimum 60 to accommodate icon + number + padding
+    return (40 + (digits * 10.0)).clamp(60.0, 120.0);
   }
 
   // Implement getters/setters for mixins
@@ -137,6 +141,10 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
     super.initState();
     _verticalScrollController.addListener(_onScroll);
     _initializeHistoryService();
+    // Request focus for keyboard shortcuts when the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _keyboardFocusNode.requestFocus();
+    });
   }
 
   Future<void> _initializeHistoryService() async {
@@ -148,6 +156,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
     _verticalScrollController.removeListener(_onScroll);
     _horizontalScrollController.dispose();
     _verticalScrollController.dispose();
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -165,8 +174,39 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
   void _initializeColumnWidths() {
     _columnWidths.clear();
     _columnWidths.add(_lineNumberColumnWidth);
+
+    // Get screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate available width (subtract margins, padding, scrollbar, borders)
+    final availableWidth = screenWidth -
+        (CsvTheme.spacingMd * 2) - // table margins
+        _lineNumberColumnWidth - // line number column
+        (_showCheckboxes ? 48 : 0) - // checkbox column
+        24; // scrollbar width + padding buffer
+
+    // Minimum column width
+    const minColumnWidth = 150.0;
+
+    // Calculate column width based on number of columns
+    final numColumns = _headers.length;
+    if (numColumns == 0) return;
+
+    final defaultTotalWidth = numColumns * minColumnWidth;
+
+    double columnWidth;
+    if (defaultTotalWidth < availableWidth) {
+      // If total default width is less than available width, expand columns to fill screen
+      columnWidth = availableWidth / numColumns;
+      // Ensure column width doesn't exceed a reasonable maximum
+      columnWidth = columnWidth.clamp(minColumnWidth, 600.0);
+    } else {
+      // Otherwise use default width
+      columnWidth = minColumnWidth;
+    }
+
     for (int i = 0; i < _headers.length; i++) {
-      _columnWidths.add(150);
+      _columnWidths.add(columnWidth);
     }
   }
 
@@ -765,9 +805,16 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['csv'],
+        initialDirectory: _lastDirectoryPath,
       );
 
       if (result != null && result.files.single.path != null) {
+        final filePath = result.files.single.path!;
+        final file = File(filePath);
+
+        // Remember the directory for next time
+        _lastDirectoryPath = file.parent.path;
+
         setState(() {
           _isLoading = true;
           _fileName = result.files.single.name;
@@ -779,7 +826,6 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
           _selectedCells.clear();
         });
 
-        final file = File(result.files.single.path!);
         _currentFile = file;
         await _readCsvFileGradually(file);
       }
@@ -1016,21 +1062,26 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
         });
         for (final file in details.files) {
           if (file.path.toLowerCase().endsWith('.csv')) {
+            final csvFile = File(file.path);
+
+            // Remember the directory for next time
+            _lastDirectoryPath = csvFile.parent.path;
+
             setState(() {
               clearHistory();
               _hasUnsavedChanges = false;
               _selectedRowIndices.clear();
               _selectedCells.clear();
             });
-            await _readCsvFileGradually(File(file.path));
+            await _readCsvFileGradually(csvFile);
             break;
           }
         }
       },
-      child: KeyboardListener(
-        focusNode: FocusNode(),
+      child: Focus(
+        focusNode: _keyboardFocusNode,
         autofocus: true,
-        onKeyEvent: (event) {
+        onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
             final isCmdOrCtrl = HardwareKeyboard.instance.isMetaPressed ||
                 HardwareKeyboard.instance.isControlPressed;
@@ -1039,15 +1090,19 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
             if (isCmdOrCtrl) {
               if (event.logicalKey == LogicalKeyboardKey.keyS) {
                 _saveToFile();
+                return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.keyZ &&
                   !isShift) {
                 _undo();
+                return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.keyZ &&
                   isShift) {
                 _redo();
+                return KeyEventResult.handled;
               }
             }
           }
+          return KeyEventResult.ignored;
         },
         child: Stack(
           children: [
@@ -1068,6 +1123,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
                     IconButton(
                       icon: Icon(
                         _compactMode ? Icons.unfold_more : Icons.unfold_less,
+                        size: 18,
                       ),
                       tooltip: _compactMode
                           ? 'Expand Rows (Show Full Text)'
@@ -1084,6 +1140,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
                         _showHistoryBoard
                             ? Icons.history_toggle_off
                             : Icons.history,
+                        size: 16,
                         color: _showHistoryBoard ? CsvTheme.primaryColor : null,
                       ),
                       tooltip:
@@ -1095,7 +1152,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
                       },
                     ),
                   IconButton(
-                    icon: const Icon(Icons.open_in_full),
+                    icon: const Icon(Icons.open_in_full, size: 15),
                     tooltip: 'Maximize Window',
                     onPressed: () async {
                       await WindowManagerService.instance.maximizeWindow();
@@ -1246,7 +1303,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
                           )
                         : _allCsvData.isEmpty
                             ? _buildEmptyState()
-                            : _buildTable(),
+                            : Center(child: _buildTable()),
                   ),
 
                   // Status Bar
@@ -1352,8 +1409,20 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
   }
 
   Widget _buildTable() {
+    final calculatedWidth = _columnWidths.isNotEmpty
+        ? _columnWidths.reduce((a, b) => a + b) + (_showCheckboxes ? 48 : 0)
+        : 848.0;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxTableWidth = screenWidth - (CsvTheme.spacingMd * 2);
+
+    // Use the larger of calculated width or max screen width to ensure table fills screen
+    final tableWidth =
+        calculatedWidth > maxTableWidth ? calculatedWidth : maxTableWidth;
+
     return Container(
-      margin: const EdgeInsets.all(CsvTheme.spacingLg),
+      width: tableWidth,
+      margin: const EdgeInsets.symmetric(vertical: CsvTheme.spacingMd),
       decoration: BoxDecoration(
         color: CsvTheme.surfaceColor,
         borderRadius: BorderRadius.circular(CsvTheme.radiusLg),
@@ -1369,10 +1438,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
             controller: _horizontalScrollController,
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width: _columnWidths.isNotEmpty
-                  ? _columnWidths.reduce((a, b) => a + b) +
-                      (_showCheckboxes ? 48 : 0)
-                  : 848,
+              width: tableWidth,
               child: Column(
                 children: [
                   _buildTableHeader(),
@@ -1594,7 +1660,7 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
                               horizontal: CsvTheme.spacingMd,
                               vertical: CsvTheme.spacingSm,
                             ),
-                            alignment: Alignment.centerRight,
+                            alignment: Alignment.center,
                             child: Text(
                               text,
                               style: CsvTheme.labelMedium.copyWith(
@@ -1990,9 +2056,10 @@ class _CsvReaderScreenModernState extends State<CsvReaderScreenModern>
         if (HardwareKeyboard.instance.isMetaPressed ||
             HardwareKeyboard.instance.isControlPressed) {
           _toggleCellSelection(originalRowIndex, colIndex);
-        } else {
-          _startEditing(rowIndex, colIndex, content);
         }
+      },
+      onDoubleTap: () {
+        _startEditing(rowIndex, colIndex, content);
       },
       child: Container(
         width: width,

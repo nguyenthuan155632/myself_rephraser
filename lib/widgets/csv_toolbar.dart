@@ -34,7 +34,7 @@ class CsvToolbar extends StatelessWidget {
     this.canRedo = false,
     this.selectedCellsCount = 0,
     this.selectedRowsCount = 0,
-    this.showCheckboxes = true,
+    this.showCheckboxes = false,
     this.onNewFile,
     this.onSave,
     this.onUndo,
@@ -55,7 +55,7 @@ class CsvToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 56,
+      height: 36,
       decoration: BoxDecoration(
         color: CsvTheme.surfaceColor,
         border: const Border(
@@ -65,7 +65,7 @@ class CsvToolbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const SizedBox(width: CsvTheme.spacingLg),
+          const SizedBox(width: CsvTheme.spacingMd),
 
           // File actions
           _buildToolbarSection([
@@ -320,7 +320,7 @@ class CsvToolbar extends StatelessWidget {
   Widget _buildCleanupMenu() {
     return PopupMenuButton<String>(
       icon: Icon(
-        Icons.cleaning_services_outlined,
+        Icons.clean_hands,
         size: 20,
         color: CsvTheme.textSecondary,
       ),
